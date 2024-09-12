@@ -58,46 +58,42 @@ function downloadPDF() {
     const pdf = new jsPDF({
         orientation: "portrait",
         unit: "mm",
-        format: "a4"
+        format: [0, 0]
     });
 
-    // Add each barcode to the PDF
     const barcodeItems = barcodeContainer.getElementsByClassName('barcode-item');
-    
-    const barcodeWidth = 38;  // Barcode width in mm (1.5 inches)
-    const barcodeHeight = 25;  // Barcode height in mm (1 inch)
-    const spacing = 20;  // Vertical spacing between barcodes
 
-    let yOffset = 10; // Start position (10 mm from the top)
-    
+    // Loop through each barcode item and add it to a new page
     for (let i = 0; i < barcodeItems.length; i++) {
         const item = barcodeItems[i];
+
+        const barcodeWidth = 60;  // Barcode width in mm
+        const barcodeHeight = 30;  // Barcode height in mm
 
         // Get the product name, barcode, and serial number
         const productName = item.getElementsByTagName('h2')[0].innerText;
         const barcodeCanvas = item.getElementsByTagName('canvas')[0];
         const serialNumber = item.getElementsByTagName('p')[0].innerText;
 
+        if (i > 0) { // Add a new page for each barcode except the first one
+            pdf.addPage();
+        }
+
+        // Set the PDF page size to match the barcode size
+        pdf.internal.pageSize.width = barcodeWidth;
+        pdf.internal.pageSize.height = barcodeHeight;
+
         // Add the product name to the PDF
         pdf.setFontSize(14);
-        pdf.text(productName, 10, yOffset);
+        pdf.text(productName, 2, 5);  // Positioning at the top of the page
 
-        // Add the barcode image to the PDF (adjusting for size and placement)
+        // Add the barcode image to the PDF
         const imgData = barcodeCanvas.toDataURL('image/png');
-        pdf.addImage(imgData, 'PNG', 10, yOffset + 5, barcodeWidth, barcodeHeight);  // Adjusting for standard size
+        pdf.addImage(imgData, 'PNG', 2, 6, barcodeWidth - 10, barcodeHeight - 9);  // Adjusting for size and placement
 
         // Add the serial number below the barcode
         pdf.setFontSize(10);
-        pdf.text(serialNumber, 10, yOffset + barcodeHeight + 12);
-
-        // Update yOffset for next barcode (add spacing)
-        yOffset += barcodeHeight + spacing;
-
-        // If the yOffset goes beyond the page height, add a new page
-        if (yOffset > 280) { // Page height for A4 in mm
-            pdf.addPage();
-            yOffset = 10; // Reset yOffset for the new page
-        }
+        pdf.text(serialNumber, 2, 7 + barcodeHeight - 8);  // Positioning below the barcode
     }
 
     // Save the PDF
